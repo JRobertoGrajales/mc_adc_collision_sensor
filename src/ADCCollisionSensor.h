@@ -5,15 +5,9 @@
 #pragma once
  
 #include "LpfThreshold.h"
- 
+#include "ROS2Subscriber.h" 
+
 #include <mc_control/GlobalPlugin.h>
-#include <mc_rtc/ros.h>
- 
-#include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/float64.hpp>
- 
-#include <mutex>
-#include <string>
  
 namespace mc_plugin
 {
@@ -46,18 +40,28 @@ struct ADCCollisionSensor : public mc_control::GlobalPlugin
   void before(mc_control::MCGlobalController & controller) override;
  
   void after(mc_control::MCGlobalController & controller) override;
+
+  void addGui(mc_control::MCGlobalController & controller);
+  void addLog(mc_control::MCGlobalController & controller);
  
   mc_control::GlobalPlugin::GlobalPluginConfiguration configuration() override;
  
   ~ADCCollisionSensor() override;
  
 private:
+
+  // GUI
+  bool activate_verbose_ = true;
+
   // ── ROS 2 ────────────────────────────────────────────────────────────────
   std::shared_ptr<rclcpp::Node> node_;
-  rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr voltage_sub_;
-  std::mutex mutex_;
-  double     voltage_in_ = 0.0; ///< latest value from ROS callback
-  std::string voltage_topic_;
+  std::thread spinThread_;              // Thread to spin the ROS node
+  std::mutex mutex_;                    // Mutex to lock the Force sensor data
+  ROSFloatSubscriber voltage_sub_; // ROS Voltage subscriber
+  void rosSpinner(void);     // ROS spinner function
+  bool stop_thread = false;
+
+  double voltage_in_ = 0.0; ///< latest value from ROS callback
  
   // ── Signal processing ────────────────────────────────────────────────────
   // LpfThreshold tracks a filtered version of the signal and returns
@@ -66,15 +70,12 @@ private:
   LpfThreshold lpf_;
   double threshold_offset_  = 1.0;  ///< volts above/below filtered signal
   double threshold_filtering_ = 0.05; ///< LPF coefficient (0–1)
- 
-  // Cached threshold values for logging/GUI
   double threshold_high_ = 0.0;
   double threshold_low_  = 0.0;
  
-  // ── State ─────────────────────────────────────────────────────────────────
-  bool collision_     = false;
-  bool prev_collision_ = false;
-  bool verbose_        = false;
+  bool obstacle_detected_ = false;
+  bool prev_obstacle_detected_ = false;
+  bool collision_stop_activated_ = false;
 };
  
 } // namespace mc_plugin

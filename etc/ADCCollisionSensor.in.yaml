@@ -5,15 +5,14 @@ voltage_topic: "/collision/voltage"
 
 # Voltage threshold for collision detection (Volts)
 # filtered_voltage > threshold  →  collision = true
-threshold: 5.0
+threshold_offset: 5.0
 
 # IIR low-pass filter coefficient
 #   1.0  = no filtering (raw value, maximum responsiveness)
 #   0.1  = moderate smoothing
 #   0.05 = heavy smoothing (matches Bastien's threshold_filtering_base default)
 # Formula: y[n] = alpha * x[n] + (1 - alpha) * y[n-1]
-lpf_alpha: 1.0
+threshold_filtering: 1.0
 
 # Print collision-cleared messages to console (rising edge always logged)
-verbose: false
-freq: 1000.0
+verbose: true
