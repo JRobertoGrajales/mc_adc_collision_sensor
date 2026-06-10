@@ -50,7 +50,11 @@ set(plugin_HDR
  
 # The add_plugin macro is provided by mc_rtc
 add_plugin(ADCCollisionSensor "${plugin_SRC}" "${plugin_HDR}")
-target_link_libraries(ADCCollisionSensor PUBLIC mc_rtc::mc_rtc_ros)
+target_link_libraries(ADCCollisionSensor PUBLIC
+  mc_rtc::mc_rtc_ros
+  rclcpp::rclcpp
+  ${std_msgs_TARGETS}
+)
  
 # if(BUILD_TESTING)
 #   add_subdirectory(tests)
