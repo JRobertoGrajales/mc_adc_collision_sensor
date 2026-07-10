@@ -119,7 +119,8 @@ struct ROSSubscriber : public Subscriber<TargetType>
 
   void subscribe(std::shared_ptr<rclcpp::Node> & node, const std::string & topic, const unsigned bufferSize = 1)
   {
-    sub_ = node->create_subscription<ROSMessageType>(topic, bufferSize, std::bind(&ROSSubscriber::callback, this, std::placeholders::_1));
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(bufferSize)).best_effort();
+    sub_ = node->create_subscription<ROSMessageType>(topic, qos, std::bind(&ROSSubscriber::callback, this, std::placeholders::_1));
   }
 
   std::string topic() const
