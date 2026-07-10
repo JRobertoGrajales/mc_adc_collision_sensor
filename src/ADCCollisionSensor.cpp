@@ -22,6 +22,9 @@ void ADCCollisionSensor::init(mc_control::MCGlobalController & controller,
     ctl.controller().datastore().make<bool>("Obstacle detected", false);
   }
   
+  dt_ = ctl.timestep();
+  counter_ = 0.0;
+
   // ── Config ───────────────────────────────────────────────────────────────
   std::string voltage_topic = config("voltage_topic",        std::string("/collision/voltage"));
   activate_verbose_ = config("verbose",               true);
@@ -62,7 +65,14 @@ void ADCCollisionSensor::reset(mc_control::MCGlobalController & controller)
 // ─────────────────────────────────────────────────────────────────────────────
 void ADCCollisionSensor::before(mc_control::MCGlobalController & controller)
 {
-   auto & ctl = static_cast<mc_control::MCGlobalController &>(controller);
+  auto & ctl = static_cast<mc_control::MCGlobalController &>(controller);
+  counter_ += dt_;
+
+  if(activate_plot_ && !plot_added_)
+  {
+    addPlot(controller);
+    plot_added_ = true;
+  }
 
   // ── 1. Grab latest voltage (thread-safe) ─────────────────────────────────
   voltage_in_ = voltage_sub_.data().value();
@@ -140,6 +150,7 @@ void ADCCollisionSensor::addGui(mc_control::MCGlobalController & controller)
         threshold_offset_ = v;
         lpf_.setOffset(v);
       }),
+    mc_rtc::gui::Button("Add plot", [this]() { return activate_plot_ = true; }),
     mc_rtc::gui::Label("voltage",
       [this]() { return std::to_string(voltage_in_); }),
     mc_rtc::gui::Label("threshold_high",
@@ -167,6 +178,16 @@ void ADCCollisionSensor::addLog(mc_control::MCGlobalController & controller)
                      [this]() { return threshold_offset_; });
   logger.addLogEntry("ADCCollisionSensor_threshold_filtering",
                      [this]() { return threshold_filtering_; });
+}
+
+void ADCCollisionSensor::addPlot(mc_control::MCGlobalController & controller)
+{
+  auto & ctl = static_cast<mc_control::MCGlobalController &>(controller);
+  auto & gui = *ctl.controller().gui();
+
+  gui.addPlot("ADCCollisionSensor", mc_rtc::gui::plot::X("t", [this]() { return counter_; }),
+              mc_rtc::gui::plot::Y(
+                  "voltage", [this]() { return voltage_in_; }, mc_rtc::gui::Color::Red));
 }
 
 } // namespace mc_plugin

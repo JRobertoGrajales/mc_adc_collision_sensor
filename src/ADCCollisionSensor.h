@@ -42,6 +42,7 @@ struct ADCCollisionSensor : public mc_control::GlobalPlugin
   void after(mc_control::MCGlobalController & controller) override;
 
   void addGui(mc_control::MCGlobalController & controller);
+  void addPlot(mc_control::MCGlobalController & controller);
   void addLog(mc_control::MCGlobalController & controller);
  
   mc_control::GlobalPlugin::GlobalPluginConfiguration configuration() override;
@@ -52,6 +53,9 @@ private:
 
   // GUI
   bool activate_verbose_ = true;
+
+  double dt_;
+  double counter_;
 
   // ── ROS 2 ────────────────────────────────────────────────────────────────
   std::shared_ptr<rclcpp::Node> node_;
@@ -73,6 +77,8 @@ private:
   double threshold_high_ = 0.0;
   double threshold_low_  = 0.0;
  
+  bool activate_plot_ = false;
+  bool plot_added_ = false;
   bool obstacle_detected_ = false;
   bool prev_obstacle_detected_ = false;
   bool collision_stop_activated_ = false;
